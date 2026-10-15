@@ -1,8 +1,8 @@
 
-added 1 package in 3s
+added 1 package in 2s
 page.evaluate: TypeError: window.ArcCharacterFX?.finale is not a function
     at Object.destroyArcMap (file:///home/runner/work/ArcMap-Rage-Room/ArcMap-Rage-Room/index.html:674:28)
-    at eval (eval at evaluate (:370:30), <anonymous>:11:7)
+    at eval (eval at evaluate (:370:30), <anonymous>:17:7)
     at UtilityScript.evaluate (<anonymous>:372:16)
     at UtilityScript.<anonymous> (<anonymous>:1:44)
     at /home/runner/work/ArcMap-Rage-Room/ArcMap-Rage-Room/tests/browser-smoke.cjs:18:26 {
