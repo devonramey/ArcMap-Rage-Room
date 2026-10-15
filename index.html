@@ -457,7 +457,7 @@ pixel=vec4(clamp(col,0.,1.),1.);}`;
       this.tone(290+Math.random()*120,.13,'triangle',.035,-(100+power*18));
       if(power>6)this.tone(180,.21,'sawtooth',.026,-95);
     }
-    toggle(){this.muted=!this.muted;if(this.muted&&'speechSynthesis' in window)window.speechSynthesis.cancel();if(!this.muted){this.unlock();this.ui();} ui.sound.textContent=this.muted?'♪̸':'♫';ui.audioStatus.textContent=this.muted?'SOUND MUTED':'SOUND READY';}
+    toggle(){this.muted=!this.muted;window.ARCMAP_GAME_MUTED=this.muted;window.ArcCharacterFX?.setMuted?.(this.muted);if(this.muted&&'speechSynthesis' in window)window.speechSynthesis.cancel();if(!this.muted){this.unlock();this.ui();} ui.sound.textContent=this.muted?'♪̸':'♫';ui.audioStatus.textContent=this.muted?'SOUND MUTED':'SOUND READY';}
   }
   const audio=new Sound();
 
@@ -1390,7 +1390,7 @@ pixel=vec4(clamp(col,0.,1.),1.);}`;
 
   $('resetBtn').addEventListener('click',()=>{audio.ui();reset(2,true)});
   $('bloodBtn').addEventListener('click',toggleBlood);
-  $('voiceBtn').addEventListener('click',()=>{game.voiceOn=!game.voiceOn;$('voiceBtn').textContent='VOICE: '+(game.voiceOn?'ON':'OFF');if(!game.voiceOn&&'speechSynthesis' in window)window.speechSynthesis.cancel();audio.ui();});
+  $('voiceBtn').addEventListener('click',()=>{game.voiceOn=!game.voiceOn;$('voiceBtn').textContent='VOICE: '+(game.voiceOn?'ON':'OFF');if(!game.voiceOn){window.ArcCharacterFX?.stop?.();if('speechSynthesis' in window)window.speechSynthesis.cancel();}audio.ui();});
   $('gravityBtn').addEventListener('click',()=>{game.gravityLow=!game.gravityLow;updateGravityButton();announce(game.gravityLow?'MOON GRAVITY ON':'NORMAL GRAVITY',1.2)});
   ui.finisher.addEventListener('click',finisher);
   ui.sound.addEventListener('click',()=>audio.toggle());
