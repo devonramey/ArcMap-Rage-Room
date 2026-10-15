@@ -2,7 +2,7 @@ name: Physics and weapon regression tests
 on:
   push:
     branches: [development-v7-physics, main]
-    paths-ignore: ['tests/CI_RESULT.txt', 'tests/CI_OUTPUT.txt']
+    paths-ignore: ['tests/CI_RESULT.txt', 'tests/CI_OUTPUT.txt', 'tests/CI_BROWSER_OUTPUT.txt']
   workflow_dispatch:
 permissions:
   contents: write
@@ -30,16 +30,27 @@ jobs:
           code=$?
           cat tests/CI_OUTPUT.txt
           exit "$code"
+      - name: Run real browser integration test
+        id: browser
+        if: steps.physics.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set +e
+          (npm install --no-save --no-audit --no-fund playwright-core@latest && node tests/browser-smoke.cjs) > tests/CI_BROWSER_OUTPUT.txt 2>&1
+          code=$?
+          cat tests/CI_BROWSER_OUTPUT.txt
+          exit "$code"
       - name: Record physics test result in branch
         if: always()
         env:
           SYNTAX_OUTCOME: ${{ steps.syntax.outcome }}
           PHYSICS_OUTCOME: ${{ steps.physics.outcome }}
+          BROWSER_OUTCOME: ${{ steps.browser.outcome }}
         run: |
-          printf 'Commit: %s\nSyntax: %s\nPhysics: %s\n' "$GITHUB_SHA" "$SYNTAX_OUTCOME" "$PHYSICS_OUTCOME" > tests/CI_RESULT.txt
+          printf 'Commit: %s\nSyntax: %s\nPhysics: %s\nBrowser: %s\n' "$GITHUB_SHA" "$SYNTAX_OUTCOME" "$PHYSICS_OUTCOME" "$BROWSER_OUTCOME" > tests/CI_RESULT.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/CI_RESULT.txt tests/CI_OUTPUT.txt
+          git add tests/CI_RESULT.txt tests/CI_OUTPUT.txt tests/CI_BROWSER_OUTPUT.txt
           git commit -m 'Record physics regression result [skip ci]' || true
           git push origin HEAD:${GITHUB_REF_NAME}
-          test "$SYNTAX_OUTCOME" = success && test "$PHYSICS_OUTCOME" = success
+          test "$SYNTAX_OUTCOME" = success && test "$PHYSICS_OUTCOME" = success && test "$BROWSER_OUTCOME" = success
