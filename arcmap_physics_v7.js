@@ -15,6 +15,7 @@
       this.members = new Map();
       this.limbs = [];
       this.fragBodies = [];
+      this.fragmentSnapshots = new Map();
       this.lastSnapshot = null;
       this.mouseJoint = null;
       this.mouseTarget = null;
@@ -27,7 +28,7 @@
     px(x,y) {return this.v(x/SCALE,y/SCALE)}
     reset(game) {
       this.enabled = false; this.world = null; this.partBodies.clear(); this.members.clear();
-      this.limbs = []; this.fragBodies = []; this.contacts = [];
+      this.limbs = []; this.fragBodies = []; this.fragmentSnapshots.clear(); this.contacts = [];
       this.mouseJoint = null; this.mouseTarget = null; this.lastSnapshot = null;
       this.destructionStarted = false;
       if (!P || !P.World || !P.Box || !P.Vec2 || !P.RevoluteJoint) {
@@ -187,6 +188,7 @@
         body.createFixture(P.Box(Math.max(3,f.w/2)/SCALE,Math.max(3,f.h/2)/SCALE),{density:.76,friction:.63,restitution:.45});
         body.setLinearVelocity(this.px(f.vx,f.vy));body.setAngularVelocity(f.va||0);f.rigid=body;
         this.fragBodies.push({fragment:f,body});
+        this.fragmentSnapshots.set(f,{x:f.x,y:f.y,vx:f.vx,vy:f.vy,va:f.va});
       }
       for(const link of this.limbs){
         if(link.shoulder){this.world.destroyJoint(link.shoulder);link.shoulder=null;}
@@ -194,11 +196,23 @@
       if(this.torso){this.world.destroyBody(this.torso);this.torso=null;}
       this.partBodies.clear();
     }
+    syncFragmentEffects(){
+      // The preexisting black-hole, vortex and impact systems add velocity to
+      // fragment model values. Apply those deltas to their Planck bodies.
+      for(const {fragment:f,body} of this.fragBodies){
+        const old=this.fragmentSnapshots.get(f);if(!old)continue;
+        const v=body.getLinearVelocity();
+        const dvx=(f.vx-old.vx)/SCALE,dvy=(f.vy-old.vy)/SCALE;
+        if(Math.abs(dvx)+Math.abs(dvy)>.01)body.setLinearVelocity(this.v(clamp(v.x+dvx,-70,70),clamp(v.y+dvy,-70,70)));
+        if(Math.hypot(f.x-old.x,f.y-old.y)>35){body.setTransform(this.px(f.x,f.y),body.getAngle());}
+      }
+    }
     sync(game){
       if(this.destructionStarted){
         for(const {fragment:f,body} of this.fragBodies){
           const p=body.getPosition(),v=body.getLinearVelocity();
           f.x=p.x*SCALE;f.y=p.y*SCALE;f.a=body.getAngle();f.vx=v.x*SCALE;f.vy=v.y*SCALE;f.va=body.getAngularVelocity();
+          this.fragmentSnapshots.set(f,{x:f.x,y:f.y,vx:f.vx,vy:f.vy,va:f.va});
         }
         for(const link of this.limbs){this.syncLink(link)}
         return;
@@ -223,7 +237,7 @@
     step(game,dt){
       if(!this.enabled||!this.world)return false;
       try{
-        if(game.destroyed){this.makeFragments(game);}else{this.syncExternal(game)}
+        if(game.destroyed){this.makeFragments(game);this.syncFragmentEffects();}else{this.syncExternal(game)}
         this.world.setGravity(this.v(0,game.gravityLow?4.5:17));
         this.syncDrag(game);
         if(game.stasisTime>0 && this.torso){this.torso.setLinearVelocity(this.v(0,0));this.torso.setAngularVelocity(0)}
