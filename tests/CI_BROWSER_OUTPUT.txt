@@ -1,15 +1,4 @@
 
 added 1 package in 2s
-Browser integration: {"weapons":38,"physics":true,"impactPart":"arm-l-lower","collided":true,"embedded":1,"fragments":12,"rigidFragments":0}
-AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-
-0 !== 12
-
-    at /home/runner/work/ArcMap-Rage-Room/ArcMap-Rage-Room/tests/browser-smoke.cjs:37:10 {
-  generatedMessage: true,
-  code: 'ERR_ASSERTION',
-  actual: 0,
-  expected: 12,
-  operator: 'strictEqual',
-  diff: 'simple'
-}
+Browser integration: {"weapons":38,"physics":true,"impactPart":"arm-l-lower","collided":true,"embedded":1,"fragments":12,"rigidFragments":12}
+PASS: Browser loaded Planck, 38 weapons, knife embedding and 12 physical fragments.
