@@ -1,0 +1,20 @@
+name: Physics and weapon regression tests
+on:
+  push:
+    branches: [development-v7-physics, main]
+  workflow_dispatch:
+jobs:
+  physics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check vendor/planck.min.js
+          node --check arcmap_physics_v7.js
+          node --check tests/physics-smoke.cjs
+      - name: Run real Planck simulation tests
+        run: node tests/physics-smoke.cjs
