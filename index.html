@@ -475,7 +475,7 @@ pixel=vec4(clamp(col,0.,1.),1.);}`;
     drag:null,pointer:V(-100,-100),pointerDown:false,punchHold:false,
     hitDir:1,scoreOffset:0,cameraX:0,cameraY:0,heavyFlash:0,
     fps:60,lastUI:0,lastPropHit:0,hitStamp:0,
-    material:null, fields:[],ties:[],portals:[],clones:[],sizeFactor:1,stasisTime:0,stasisForce:V(),partDamage:{},knives:[],lastImpactPart:'torso',
+    material:null, fields:[],ties:[],portals:[],clones:[],sizeFactor:1,stasisTime:0,stasisForce:V(),partDamage:{},knives:[],localScars:[],wallKnives:[],lastImpactPart:'torso',
     energyFX:[],customProjectiles:[],beamFX:null,interactionTip:'',stasisAt:V(),
     bloodOn:true,bloodMarks:[],floorBlood:[],slashLines:[],chips:[],swordTrail:[],swordPrev:V(-200,-200),swordSwingTime:-1,swipeHitTime:-1,slashes:0,meleeSwings:[],cursorInside:false,bulletHoles:[],charMarks:[],worldMarks:[],burn:0,ignite:0,flameReach:0,recoil:0,freeze:0,arc:0,flameParticles:[],flameTime:0,voiceOn:true,lastVoice:-20,dragSamples:[],cursorInside:false,
   };
@@ -508,7 +508,7 @@ pixel=vec4(clamp(col,0.,1.),1.);}`;
     game.props=[];
     game.material={heat:0,wet:0,frost:0,charge:0,brittle:0,acid:0,integrity:100,form:'normal'};
     game.fields=[];game.ties=[];game.portals=[];game.clones=[];game.sizeFactor=1;game.stasisTime=0;game.stasisForce=V();
-    game.energyFX=[];game.customProjectiles=[];game.beamFX=null;game.interactionTip='';game.partDamage={};game.knives=[];game.lastImpactPart='torso';
+    game.energyFX=[];game.customProjectiles=[];game.beamFX=null;game.interactionTip='';game.partDamage={};game.knives=[];game.wallKnives=[];game.localScars=[];game.lastImpactPart='torso';
     initLimbs();window.ArcV6Physics?.reset(game);setCricketUI();updateUI(true);
     announce('THE IMPACT CHAMBER · NO HEALTH LIMIT',1.5);
   }
@@ -1572,6 +1572,8 @@ pixel=vec4(clamp(col,0.,1.),1.);}`;
           game.material.integrity=Math.max(0,game.material.integrity-33);particle(hit.x,hit.y,'#b7f8ff',40,1.8,'shard');
         }
         if(['bullet','pellet','heavy','rail','arrow','knife'].includes(s.type)){
+          const decal=physics.embeddedKnife({...hit,vx:s.vx,vy:s.vy});
+          if(decal){game.localScars.push({...decal,kind:s.type,r:s.type==='heavy'||s.type==='rail'?11:s.type==='knife'?7:4});if(game.localScars.length>130)game.localScars.shift();}
           scar(hit.x,hit.y,'dent');wound(hit.x,hit.y,s.type==='heavy'||s.type==='rail');
         }
       }
@@ -1629,7 +1631,14 @@ pixel=vec4(clamp(col,0.,1.),1.);}`;
           if(Math.random()<.8)particle(s.x,s.y,'#ffb56c',2,.2);
         }
         if(s.type==='arrow')s.vy+=135*dt;
-        if(s.type==='knife')s.vy+=215*dt;
+        if(s.type==='knife'){
+          s.vy+=215*dt;
+          if(s.x<31||s.x>W-31||s.y<148||s.y>645){
+            game.wallKnives.push({x:clamp(s.x,31,W-31),y:clamp(s.y,148,645),a:s.rot});
+            if(game.wallKnives.length>80)game.wallKnives.shift();
+            game.shots.splice(i,1);continue;
+          }
+        }
         if(hitProjectile(s)){game.shots.splice(i,1);continue;}
         if((s.type==='rocket'||s.type==='grenade'||s.type==='cannon')&&(s.ttl<=0||s.y>640)){burst(s.x,Math.min(640,s.y),s.type==='rocket'?1500:1200,245,s.damage);game.shots.splice(i,1);continue;}
         if(damagePropAt(s.x,s.y,(s.damage||0)*1.6)){
@@ -1987,8 +1996,7 @@ pixel=vec4(clamp(col,0.,1.),1.);}`;
     // Permanent damage overlay: red drops, irregular splashes and hanging drips.
     if(game.bloodOn){
       ctx.save();ctx.beginPath();ctx.roundRect(-113,-66,226,130,8);ctx.clip();
-      for(const m of game.bloodMarks){
-        ctx.save();ctx.translate(m.x,m.y);ctx.rotate(m.rot);ctx.globalAlpha=m.opacity;
+      for(const m of game.bloodMarks){        ctx.save();ctx.translate(m.x,m.y);ctx.rotate(m.rot);ctx.globalAlpha=m.opacity;
         if(m.shape==='streak'){
           ellipse(0,0,m.r*.58,m.r*1.7,'#970b27');ellipse(-1,-m.r*.4,m.r*.3,m.r*.6,'#e0374b');
         }else if(m.shape==='drip'){
@@ -1996,7 +2004,8 @@ pixel=vec4(clamp(col,0.,1.),1.);}`;
           ctx.strokeStyle='#9e102c';ctx.lineWidth=Math.max(2,m.r*.4);ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-2,m.stem*.5,1,m.stem);ctx.stroke();
           ellipse(1,m.stem,m.r*.37,m.r*.5,'#a30d2b');
         }else{
-          ellipse(0,0,m.r,m.r*.76,'#a40926');          ellipse(-m.r*.17,-m.r*.12,m.r*.43,m.r*.24,'#e63b52');
+          ellipse(0,0,m.r,m.r*.76,'#a40926');
+          ellipse(-m.r*.17,-m.r*.12,m.r*.43,m.r*.24,'#e63b52');
         }
         ctx.restore();
       }
@@ -2043,6 +2052,23 @@ pixel=vec4(clamp(col,0.,1.),1.);}`;
     ctx.fillStyle='#202c39';ctx.fillRect(-28,-7,20,14);
     for(let i=0;i<3;i++)line(-27+i*7,-6,-23+i*7,6,'#91b6c8',1.8);
     line(-11,-11,-11,11,'#e0ba7b',4);ctx.restore();
+  }
+  function drawLocalizedMarks(){
+    const physics=window.ArcV6Physics;
+    for(const mark of game.localScars){
+      const p=physics?.knifeTransform?.(mark);if(!p)continue;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);
+      ctx.fillStyle=game.bloodOn?'#2c1822':'#121c28';
+      ctx.strokeStyle=game.bloodOn?'#f97683':'#8dc2d9';ctx.lineWidth=2;
+      ctx.beginPath();ctx.ellipse(0,0,mark.r,mark.r*.62,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+      for(let i=0;i<4;i++){const a=(i+.2)*Math.PI*.5;
+        line(Math.cos(a)*mark.r,Math.sin(a)*mark.r*.6,Math.cos(a)*mark.r*2,Math.sin(a)*mark.r*1.8,'#27394c',1.5);
+      }
+      ctx.restore();
+    }
+    for(const knife of game.wallKnives){
+      ctx.save();ctx.translate(knife.x,knife.y);ctx.rotate(knife.a);drawKnifeShape(-20,0,.91);ctx.restore();
+    }
   }
   function drawEmbeddedKnives(){
     const physics=window.ArcV6Physics;
@@ -2609,7 +2635,7 @@ pixel=vec4(clamp(col,0.,1.),1.);}`;
   function drawFrame(){
     ctx.save();ctx.setTransform(dpi,0,0,dpi,0,0);ctx.clearRect(0,0,W,H);
     ctx.translate(game.cameraX,game.cameraY);
-    drawEnvironment();drawV6StageLighting();v5DrawBehind();drawShots();drawFlameJet();drawTarget();drawEmbeddedKnives();v5DrawFront();drawActiveBurn();drawEffects();drawWeaponFX();drawPlasmaWhipV6();drawSwordCursor();drawFinisher();
+    drawEnvironment();drawV6StageLighting();v5DrawBehind();drawShots();drawFlameJet();drawTarget();drawLocalizedMarks();drawEmbeddedKnives();v5DrawFront();drawActiveBurn();drawEffects();drawWeaponFX();drawPlasmaWhipV6();drawSwordCursor();drawFinisher();
     if(game.heavyFlash>0){ctx.fillStyle=`rgba(255,224,191,${game.heavyFlash*.22})`;ctx.fillRect(0,0,W,H)}
     ctx.restore();
   }
