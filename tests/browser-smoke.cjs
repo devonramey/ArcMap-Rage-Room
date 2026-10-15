@@ -17,6 +17,12 @@ const {chromium} = require('playwright-core');
   await page.waitForTimeout(250);
   const stats=await page.evaluate(()=>{
     const d=window.ARCMAP_RAGE_DEBUG;
+    const actor=window.ArcCharacterFX;
+    const samples=window.ARCMAP_VOICE_CLIPS;
+    const voiceAssetsReady=!!(actor && samples?.light?.startsWith('data:audio/wav;base64,')
+        && samples?.medium?.startsWith('data:audio/wav;base64,') && samples?.heavy?.startsWith('data:audio/wav;base64,'));
+    actor?.react(12,d.game);
+    const screaming=actor?.status?.mode==='scream';
     const idx=d.weapons.findIndex(w=>w.name==='THROWING KNIVES');
     d.setWeapon(idx);
     const b=d.game.body;
@@ -28,7 +34,7 @@ const {chromium} = require('playwright-core');
     d.destroyArcMap(b.x,b.y);
     // The dramatic Cricket Gun hit-stop intentionally pauses physics briefly.
     for(let i=0;i<10;i++)d.step(.016);
-    return {weapons:d.weapons.length,physics:d.physics.enabled,impactPart,collided,embedded,fragments:d.game.fragments.length,rigidFragments:d.physics.fragBodies.length};
+    return {weapons:d.weapons.length,physics:d.physics.enabled,impactPart,collided,embedded,fragments:d.game.fragments.length,rigidFragments:d.physics.fragBodies.length,voiceAssetsReady,screaming};
   });
   console.log('Browser integration:',JSON.stringify(stats));
   assert.equal(stats.weapons,38);
@@ -36,6 +42,8 @@ const {chromium} = require('playwright-core');
   assert.ok(stats.impactPart && stats.collided && stats.embedded>=1,'Actual knife must stick to the hit physical part');
   assert.equal(stats.fragments,12);
   assert.equal(stats.rigidFragments,12);
+  assert.equal(stats.voiceAssetsReady,true,'Published voice samples and face module must be present');
+  assert.equal(stats.screaming,true,'Face should enter scream expression on heavy hits');
   await page.waitForTimeout(250);
   assert.deepEqual(exceptions,[],'Browser must not throw JavaScript exceptions');
   console.log('PASS: Browser loaded Planck, 38 weapons, knife embedding and 12 physical fragments.');
