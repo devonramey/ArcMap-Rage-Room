@@ -26,7 +26,8 @@ const {chromium} = require('playwright-core');
     const embedded=d.game.knives.length;
     const impactPart=hit?.part;
     d.destroyArcMap(b.x,b.y);
-    d.step(.016);
+    // The dramatic Cricket Gun hit-stop intentionally pauses physics briefly.
+    for(let i=0;i<10;i++)d.step(.016);
     return {weapons:d.weapons.length,physics:d.physics.enabled,impactPart,collided,embedded,fragments:d.game.fragments.length,rigidFragments:d.physics.fragBodies.length};
   });
   console.log('Browser integration:',JSON.stringify(stats));
