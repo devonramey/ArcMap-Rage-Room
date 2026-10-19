@@ -1,8 +1,10 @@
 name: Physics and weapon regression tests
 on:
   push:
-    branches: [development-v7-physics, main]
+    branches: [development-v7-physics, main, fix-ragdoll-drag-wall-joints-v7]
     paths-ignore: ['tests/CI_RESULT.txt', 'tests/CI_OUTPUT.txt', 'tests/CI_BROWSER_OUTPUT.txt']
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: write
@@ -21,12 +23,13 @@ jobs:
           node --check vendor/planck.min.js
           node --check arcmap_physics_v7.js
           node --check tests/physics-smoke.cjs
+          node --check tests/physics-wall-drag.cjs
       - name: Run real Planck simulation tests
         id: physics
         continue-on-error: true
         if: steps.syntax.outcome == 'success'
         run: |
-          node tests/physics-smoke.cjs > tests/CI_OUTPUT.txt 2>&1
+          (node tests/physics-smoke.cjs && node tests/physics-wall-drag.cjs) > tests/CI_OUTPUT.txt 2>&1
           code=$?
           cat tests/CI_OUTPUT.txt
           exit "$code"
@@ -41,7 +44,7 @@ jobs:
           cat tests/CI_BROWSER_OUTPUT.txt
           exit "$code"
       - name: Record physics test result in branch
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         env:
           SYNTAX_OUTCOME: ${{ steps.syntax.outcome }}
           PHYSICS_OUTCOME: ${{ steps.physics.outcome }}
@@ -54,3 +57,10 @@ jobs:
           git commit -m 'Record physics regression result [skip ci]' || true
           git push origin HEAD:${GITHUB_REF_NAME}
           test "$SYNTAX_OUTCOME" = success && test "$PHYSICS_OUTCOME" = success && test "$BROWSER_OUTCOME" = success
+
+      - name: Require passing PR tests
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          test "${{ steps.syntax.outcome }}" = success
+          test "${{ steps.physics.outcome }}" = success
+          test "${{ steps.browser.outcome }}" = success
