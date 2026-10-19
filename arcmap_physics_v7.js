@@ -1,4 +1,4 @@
-/* ArcMap Rage Room v7: Planck.js rigid-body simulation.
+/* ArcMap Rage Room v7.1: corrected Planck ragdoll walls and joints.
    Copyright (c) 2026 ArcMap Rage Room contributors.
    Relies on the MIT-licensed Planck.js engine, distributed separately in vendor/.
    The game uses metres internally (54 pixels = 1 metre). */
@@ -19,6 +19,9 @@
       this.lastSnapshot = null;
       this.mouseJoint = null;
       this.mouseTarget = null;
+      this.dragBody = null;
+      this.debugLastDragTarget = null;
+      this.dragMaxSpeed = 0;
       this.contacts = [];
       this.lastImpact = -10;
       this.destructionStarted = false;
@@ -29,13 +32,15 @@
     reset(game) {
       this.enabled = false; this.world = null; this.partBodies.clear(); this.members.clear();
       this.limbs = []; this.fragBodies = []; this.fragmentSnapshots.clear(); this.contacts = [];
-      this.mouseJoint = null; this.mouseTarget = null; this.lastSnapshot = null;
+      this.mouseJoint = null; this.mouseTarget = null; this.dragBody = null; this.debugLastDragTarget = null; this.dragMaxSpeed=0; this.lastSnapshot = null;
       this.destructionStarted = false;
       if (!P || !P.World || !P.Box || !P.Vec2 || !P.RevoluteJoint) {
         this.error = 'Planck.js library is unavailable'; return;
       }
       try {
         const world = new P.World({gravity:this.v(0,17)});
+        // Fixed collision boundaries are shared by the mouse-drag target limiter.
+        this.room={left:25, right:W-25, top:151, bottom:651};
         this.world=world;
         this.wall=world.createBody();
         const addWall=(x,y,hx,hy)=>this.wall.createFixture(P.Box(hx,hy,P.Vec2(x,y),0),{friction:.78,restitution:.30});
@@ -60,8 +65,8 @@
             this.register(part,rb,{kind:'limb',limb});return rb;
           };
           const upper=make(at,pivot,tag+'-upper'),lower=make(pivot,tip,tag+'-lower');
-          const shoulder=world.createJoint(P.RevoluteJoint({collideConnected:false,enableLimit:true,lowerAngle:-2.75,upperAngle:2.75},this.torso,upper,this.px(at.x,at.y)));
-          const elbow=world.createJoint(P.RevoluteJoint({collideConnected:false,enableLimit:true,lowerAngle:-2.65,upperAngle:2.65},upper,lower,this.px(pivot.x,pivot.y)));
+          const shoulder=world.createJoint(P.RevoluteJoint({collideConnected:false,enableLimit:true,lowerAngle:-1.95,upperAngle:1.95,enableMotor:true,maxMotorTorque:0,motorSpeed:0},this.torso,upper,this.px(at.x,at.y)));
+          const elbow=world.createJoint(P.RevoluteJoint({collideConnected:false,enableLimit:true,lowerAngle:-2.15,upperAngle:2.15,enableMotor:true,maxMotorTorque:0,motorSpeed:0},upper,lower,this.px(pivot.x,pivot.y)));
           this.limbs.push({limb,upper,lower,shoulder,elbow,detached:false,upperLength:Math.hypot(pivot.x-at.x,pivot.y-at.y),lowerLength:Math.hypot(tip.x-pivot.x,tip.y-pivot.y)});
           this.members.set(limb.a,upper);this.members.set(limb.b,lower);
         });
@@ -89,29 +94,91 @@
     }
     clearDrag(){
       if(this.mouseJoint && this.world){this.world.destroyJoint(this.mouseJoint);}
-      this.mouseJoint=null;this.mouseTarget=null;
+      this.mouseJoint=null;this.mouseTarget=null;this.dragBody=null;
     }
     releaseDrag(d){
       if(!this.enabled||!d)return;
       const rb=this.bodyForDrag(d);this.clearDrag();
       if(!rb)return;
-      const vx=clamp(d.vx||0,-2000,2000)/SCALE,vy=clamp(d.vy||0,-1800,1800)/SCALE;
+      // Keep the throw lively but prevent an excessive post-drag velocity spike.
+      const vx=clamp(d.vx||0,-1250,1250)/SCALE,vy=clamp(d.vy||0,-1150,1150)/SCALE;
       rb.setLinearVelocity(this.v(vx,vy));rb.setAwake(true);
+    }
+    dragExtent(rb){
+      // Bounding half-extents in world pixels, including angle, for a collision-safe
+      // mouse target.  These are physical fixture bounds, not sprite drawing bounds.
+      let halfWidth=14,halfHeight=14;
+      if(rb===this.torso){halfWidth=111*this.scale;halfHeight=65*this.scale;}
+      else if(rb.getUserData()?.kind==='limb'){
+        const part=rb.getUserData().part||'';
+        const isLower=part.endsWith('-lower');
+        const link=this.limbs.find(l=>part.startsWith(l.limb.type+'-'+l.limb.side.toLowerCase()));
+        halfWidth=(link?(isLower?link.lowerLength:link.upperLength)/2:24)*this.scale;
+        halfHeight=Math.max(.11,.13*this.scale)*SCALE;
+      }else if(rb.getUserData()?.kind==='fragment'){
+        halfWidth=15;halfHeight=15;
+      }
+      const c=Math.abs(Math.cos(rb.getAngle())),s=Math.abs(Math.sin(rb.getAngle()));
+      return {x:halfWidth*c+halfHeight*s,y:halfWidth*s+halfHeight*c};
+    }
+    clampDragTarget(rb,p){
+      // Don't request a physically impossible mouse position inside a static wall.
+      // This stops the very stiff mouse joint from pulling the torso THROUGH a wall.
+      const e=this.dragExtent(rb),margin=3,r=this.room;
+      const minX=(r.left+e.x+margin)/SCALE,maxX=(r.right-e.x-margin)/SCALE;
+      const minY=(r.top+e.y+margin)/SCALE,maxY=(r.bottom-e.y-margin)/SCALE;
+      return this.v(clamp(p.x,minX,maxX),clamp(p.y,minY,maxY));
     }
     syncDrag(game){
       const d=game.drag,rb=this.bodyForDrag(d);
       if(!rb || game.stasisTime>0){this.clearDrag();return;}
-      const target=this.px(d.x+(d.type==='body'?d.offX||0:0),d.y+(d.type==='body'?d.offY||0:0));
+      const wanted=this.px(d.x+(d.type==='body'?d.offX||0:0),d.y+(d.type==='body'?d.offY||0:0));
+      const target=this.clampDragTarget(rb,wanted);
+      this.debugLastDragTarget={x:target.x*SCALE,y:target.y*SCALE};
       if(this.mouseTarget!==rb){
         this.clearDrag();
         try {
-          this.mouseJoint=this.world.createJoint(P.MouseJoint({maxForce:Math.max(60,rb.getMass()*1900),frequencyHz:13,dampingRatio:.82,target},this.wall,rb));
+          // Lower force + critical damping preserve solid contacts against room walls.
+          // High-force 13 Hz dragging previously overwhelmed the collision solver.
+          this.mouseJoint=this.world.createJoint(P.MouseJoint({
+            maxForce:Math.max(35,rb.getMass()*245),frequencyHz:6,dampingRatio:1,
+            target
+          },this.wall,rb));
           this.mouseTarget=rb;
-        }catch(error){console.warn('MouseJoint unavailable, applying velocity drag',error);this.mouseJoint=null;this.mouseTarget=rb;}
+        }catch(error){
+          console.warn('MouseJoint unavailable, applying capped velocity drag',error);
+          this.mouseJoint=null;this.mouseTarget=rb;
+        }
       }
       if(this.mouseJoint)this.mouseJoint.setTarget(target);
-      else{const p=rb.getPosition();rb.setLinearVelocity(this.v(clamp((target.x-p.x)*30,-60,60),clamp((target.y-p.y)*30,-60,60)));}
+      else{
+        const p=rb.getPosition();
+        rb.setLinearVelocity(this.v(clamp((target.x-p.x)*12,-13,13),clamp((target.y-p.y)*12,-13,13)));
+      }
       rb.setAwake(true);
+    }
+    stabilizeLimbs(game) {
+      // Gentle, torque-limited joint-centering only when splayed far from the
+      // original pose. Avoid forced angular motors on an actively dragged limb.
+      for(const link of this.limbs){
+        if(link.detached||link.limb.detached)continue;
+        for(const [joint,threshold,mass] of [
+          [link.shoulder,.72,link.upper.getMass()],
+          [link.elbow,.95,link.lower.getMass()]
+        ]){
+          if(!joint)continue;
+          const dragged=game.drag?.type==='node'&&
+            (game.drag.node===link.limb.a||game.drag.node===link.limb.b);
+          if(dragged){joint.setMaxMotorTorque(0);continue;}
+          const angle=joint.getJointAngle(),rate=joint.getJointSpeed();
+          const beyond=Math.abs(angle)-threshold;
+          if(beyond>0){
+            const desired=clamp(-Math.sign(angle)*beyond*3.0-rate*.45,-4,4);
+            joint.setMotorSpeed(desired);
+            joint.setMaxMotorTorque(Math.min(18,Math.max(1.5,mass*5.0)));
+          }else joint.setMaxMotorTorque(0);
+        }
+      }
     }
     impulse(ix,iy,rot=0){return this.impulseAt(ix,iy,null,null,'torso',rot)}
     impulseAt(ix,iy,x,y,part=null,rot=0){
@@ -240,8 +307,9 @@
         if(game.destroyed){this.makeFragments(game);this.syncFragmentEffects();}else{this.syncExternal(game)}
         this.world.setGravity(this.v(0,game.gravityLow?4.5:17));
         this.syncDrag(game);
+        if(!game.destroyed)this.stabilizeLimbs(game);
         if(game.stasisTime>0 && this.torso){this.torso.setLinearVelocity(this.v(0,0));this.torso.setAngularVelocity(0)}
-        for(let i=0,n=Math.max(1,Math.ceil(dt/(1/90)));i<n;i++)this.world.step(dt/n,12,6);
+        for(let i=0,n=Math.max(1,Math.ceil(dt/(1/120)));i<n;i++)this.world.step(dt/n,20,12);
         for(const contact of this.contacts){
           if(contact.strength>3 && game.time-this.lastImpact>.16){
             this.lastImpact=game.time;
