@@ -140,10 +140,16 @@
         try {
           // Lower force + critical damping preserve solid contacts against room walls.
           // High-force 13 Hz dragging previously overwhelmed the collision solver.
+          // CRITICAL: Planck builds the body's LOCAL grab anchor from the
+          // target supplied at joint construction.  Using the cursor position
+          // here anchors a point OUTSIDE the body when dragged far or rapidly.
+          // Anchor to the current rigid-body center first, THEN move target.
+          const anchor=rb.getWorldCenter();
           this.mouseJoint=this.world.createJoint(P.MouseJoint({
             maxForce:Math.max(35,rb.getMass()*245),frequencyHz:6,dampingRatio:1,
-            target
+            target:anchor
           },this.wall,rb));
+          this.mouseJoint.setTarget(target);
           this.mouseTarget=rb;
         }catch(error){
           console.warn('MouseJoint unavailable, applying capped velocity drag',error);
