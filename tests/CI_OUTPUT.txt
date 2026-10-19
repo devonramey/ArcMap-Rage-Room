@@ -1,11 +1,17 @@
 PASS: Planck ragdoll, segment sweep, local knife embed, impulse, detached limb, mouse drag and 12 rigid fragments
-DRAG SAMPLE {"i":0,"target":[-1200,320],"pos":{"x":11.851814885367242,"y":6.0590021133946435},"angle":0.000363155166721897,"joint":true,"clamped":{"x":139,"y":320}}
-DRAG SAMPLE {"i":25,"target":[-1200,320],"pos":{"x":11.843004512680375,"y":7.5475392249303335},"angle":0.1615666369653359,"joint":true,"clamped":{"x":147.4572790201115,"y":320}}
+DRAG SAMPLE {"i":0,"target":[-1200,320],"pos":{"x":11.802916579858328,"y":6.058475201991444},"angle":0.0016375482745772379,"joint":true,"clamped":{"x":139,"y":320}}
+DRAG SAMPLE {"i":25,"target":[-1200,320],"pos":{"x":2.846564547261158,"y":5.932496405263715},"angle":-0.512237100968395,"joint":true,"clamped":{"x":156.45019524196218,"y":320}}
+DRAG SAMPLE {"i":50,"target":[-1200,320],"pos":{"x":2.674110324814625,"y":5.940527444895608},"angle":-1.013905414409737,"joint":true,"clamped":{"x":142.45355379340083,"y":320}}
+DRAG SAMPLE {"i":75,"target":[-1200,320],"pos":{"x":2.4648952042261554,"y":5.939953625243773},"angle":-1.1548858034333365,"joint":true,"clamped":{"x":132.43925698627135,"y":320}}
+DRAG SAMPLE {"i":100,"target":[-1200,320],"pos":{"x":2.436511809883095,"y":5.939677958866642},"angle":-1.1632560117281239,"joint":true,"clamped":{"x":131.62369789703433,"y":320}}
+DRAG SAMPLE {"i":125,"target":[-1200,320],"pos":{"x":2.4875155344896855,"y":5.939241000242794},"angle":-1.1181861157995092,"joint":true,"clamped":{"x":134.82463625555067,"y":320}}
+DRAG SAMPLE {"i":0,"target":[2300,320],"pos":{"x":2.6399150993048677,"y":7.453390630395818},"angle":-1.020696911062767,"joint":true,"clamped":{"x":1138.6072653042745,"y":320}}
+DRAG SAMPLE {"i":25,"target":[2300,320],"pos":{"x":20.841014302765707,"y":7.063129052883224},"angle":-0.6089789268032924,"joint":true,"clamped":{"x":1124.048826969105,"y":320}}
 node:internal/assert/utils:77
     throw err;
     ^
 
-AssertionError [ERR_ASSERTION]: Body crossed room wall while held: {"target":[-1200,320],"pos":{"x":11.085632427948452,"y":10.293627038913822},"extent":{"x":128.43497049252574,"y":108.53423557909917}}
+AssertionError [ERR_ASSERTION]: Body crossed room wall while held: {"target":[2300,320],"pos":{"x":20.998521664738718,"y":6.972925729267683},"extent":{"x":128.14902866863946,"y":117.20540393665881}}
     at Object.<anonymous> (/home/runner/work/ArcMap-Rage-Room/ArcMap-Rage-Room/tests/physics-wall-drag.cjs:29:12)
     at Module._compile (node:internal/modules/cjs/loader:1781:14)
     at Object..js (node:internal/modules/cjs/loader:1913:10)
