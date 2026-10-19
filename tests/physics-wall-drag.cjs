@@ -23,6 +23,7 @@ for(const [x,y] of [[-1200,320],[2300,320],[640,-800],[640,1400],[-1200,-1000],[
   game.drag={type:'body',x,y,offX:0,offY:0,vx:0,vy:0};
   for(let i=0;i<140;i++){
     tick();dragSteps++;
+    if(i%25===0)console.log('DRAG SAMPLE',JSON.stringify({i,target:[x,y],pos:eng.torso.getPosition(),angle:eng.torso.getAngle(),joint:!!eng.mouseJoint,clamped:eng.debugLastDragTarget}));
     const wanted=eng.debugLastDragTarget,r=eng.room;
     assert.ok(wanted.x>=r.left&&wanted.x<=r.right&&wanted.y>=r.top&&wanted.y<=r.bottom,'Drag target outside physical room');
     assert.ok(inBounds(eng.torso,7),'Body crossed room wall while held: '+JSON.stringify({target:[x,y],pos:eng.torso.getPosition(),extent:eng.dragExtent(eng.torso)}));
