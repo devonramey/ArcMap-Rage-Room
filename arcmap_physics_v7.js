@@ -163,6 +163,25 @@
       }
       rb.setAwake(true);
     }
+    normalizeJointAngles() {
+      // Box2D/Planck accumulates body rotations without wrapping. After a hard
+      // fling a joint may report +5.6 rad instead of the equivalent -0.68 rad.
+      // Motor/limit constraints then pull the limb the LONG way around and it
+      // remains unnaturally pinned to the side. Rebase complete revolutions
+      // without changing the visible orientation or velocity.
+      const turn=2*Math.PI;
+      for(const link of this.limbs){
+        for(const [joint,body] of [[link.shoulder,link.upper],[link.elbow,link.lower]]){
+          if(!joint)continue;
+          const raw=joint.getJointAngle();
+          const revolutions=Math.round(raw/turn);
+          if(revolutions){
+            const pos=body.getPosition();
+            body.setTransform(this.v(pos.x,pos.y),body.getAngle()-revolutions*turn);
+          }
+        }
+      }
+    }
     containDraggedBody(game) {
       // A fast drag can briefly defeat contact resolution at grazing angles.
       // While held, project the torso's oriented shape back inside the physical
@@ -334,6 +353,7 @@
         if(game.stasisTime>0 && this.torso){this.torso.setLinearVelocity(this.v(0,0));this.torso.setAngularVelocity(0)}
         for(let i=0,n=Math.max(1,Math.ceil(dt/(1/120)));i<n;i++){
           this.world.step(dt/n,20,12);
+          this.normalizeJointAngles();
           this.containDraggedBody(game);
         }
         for(const contact of this.contacts){
