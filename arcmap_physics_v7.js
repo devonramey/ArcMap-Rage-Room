@@ -144,7 +144,9 @@
           // target supplied at joint construction.  Using the cursor position
           // here anchors a point OUTSIDE the body when dragged far or rapidly.
           // Anchor to the current rigid-body center first, THEN move target.
-          const anchor=rb.getWorldCenter();
+          const anchor=d.type==='node'
+            ?this.px(d.node.x,d.node.y) // joint attaches at the grabbed hand/foot
+            :rb.getWorldCenter();        // torso and fragments attach at their centers
           this.mouseJoint=this.world.createJoint(P.MouseJoint({
             maxForce:Math.max(35,rb.getMass()*245),frequencyHz:6,dampingRatio:1,
             target:anchor
