@@ -1,8 +1,17 @@
-# ArcMap Rage Room v7.0
+# ArcMap Rage Room v7.1
 
 An **unofficial browser-based physics parody** of familiar GIS software.
 
 **Play:** https://devonramey.github.io/ArcMap-Rage-Room/
+
+## Ragdoll collision and drag fix (v7.1)
+
+- Fixed a Planck.js mouse-joint initialization error that sometimes attached the cursor to an imaginary point far outside the body, causing unnatural torque, wall penetration and uncontrolled limb rotation.
+- Torso dragging now follows the cursor from the physical body's center; grabbing a hand or foot attaches at that actual endpoint.
+- Mouse targets respect the physical interior walls, ceiling and floor. While a character is held, small solver overlaps are corrected against the rotated torso bounds; **released throws continue to collide with the walls naturally**.
+- Reduced excessively stiff dragging, increased collision solver stability, and corrected full-turn shoulder/elbow angle accumulation after hard throws.
+- Added gentle, torque-limited limb recovery so the limbs don't remain stuck splayed sideways after aggressive tossing.
+- Automated regression simulates 840 drag frames against boundaries, hand/foot dragging and repeated forceful throws, in addition to the original physics and real-browser tests.
 
 ## What's new in v7.0
 

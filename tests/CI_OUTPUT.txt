@@ -1,1 +1,2 @@
 PASS: Planck ragdoll, segment sweep, local knife embed, impulse, detached limb, mouse drag and 12 rigid fragments
+PASS wall-drag ragdoll regression: {"dragSteps":840,"postThrowCycles":7,"maxShoulder":1.5556917803972548,"maxElbow":2.009095117056553,"torso":{"x":213.58893189911424,"y":523.7158023256886}}
