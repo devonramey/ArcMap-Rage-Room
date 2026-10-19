@@ -1,10 +1,12 @@
 PASS: Planck ragdoll, segment sweep, local knife embed, impulse, detached limb, mouse drag and 12 rigid fragments
+DRAG SAMPLE {"i":0,"target":[-1200,320],"pos":{"x":11.851814885367242,"y":6.0590021133946435},"angle":0.000363155166721897,"joint":true,"clamped":{"x":139,"y":320}}
+DRAG SAMPLE {"i":25,"target":[-1200,320],"pos":{"x":11.843004512680375,"y":7.5475392249303335},"angle":0.1615666369653359,"joint":true,"clamped":{"x":147.4572790201115,"y":320}}
 node:internal/assert/utils:77
     throw err;
     ^
 
 AssertionError [ERR_ASSERTION]: Body crossed room wall while held: {"target":[-1200,320],"pos":{"x":11.085632427948452,"y":10.293627038913822},"extent":{"x":128.43497049252574,"y":108.53423557909917}}
-    at Object.<anonymous> (/home/runner/work/ArcMap-Rage-Room/ArcMap-Rage-Room/tests/physics-wall-drag.cjs:28:12)
+    at Object.<anonymous> (/home/runner/work/ArcMap-Rage-Room/ArcMap-Rage-Room/tests/physics-wall-drag.cjs:29:12)
     at Module._compile (node:internal/modules/cjs/loader:1781:14)
     at Object..js (node:internal/modules/cjs/loader:1913:10)
     at Module.load (node:internal/modules/cjs/loader:1505:32)
