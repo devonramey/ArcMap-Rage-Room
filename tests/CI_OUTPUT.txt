@@ -1,1 +1,23 @@
 PASS: Planck ragdoll, segment sweep, local knife embed, impulse, detached limb, mouse drag and 12 rigid fragments
+node:internal/assert/utils:77
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: Body crossed room wall while held: {"target":[-1200,320],"pos":{"x":11.085632427948452,"y":10.293627038913822},"extent":{"x":128.43497049252574,"y":108.53423557909917}}
+    at Object.<anonymous> (/home/runner/work/ArcMap-Rage-Room/ArcMap-Rage-Room/tests/physics-wall-drag.cjs:28:12)
+    at Module._compile (node:internal/modules/cjs/loader:1781:14)
+    at Object..js (node:internal/modules/cjs/loader:1913:10)
+    at Module.load (node:internal/modules/cjs/loader:1505:32)
+    at Function._load (node:internal/modules/cjs/loader:1309:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.3
