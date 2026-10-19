@@ -215,9 +215,11 @@
           const angle=joint.getJointAngle(),rate=joint.getJointSpeed();
           const beyond=Math.abs(angle)-threshold;
           if(beyond>0){
-            const desired=clamp(-Math.sign(angle)*beyond*3.0-rate*.45,-4,4);
+            const desired=clamp(-Math.sign(angle)*beyond*4.8-rate*.65,-5,5);
             joint.setMotorSpeed(desired);
-            joint.setMaxMotorTorque(Math.min(18,Math.max(1.5,mass*5.0)));
+            // Enough torque to recover from a hard fling, but far below an
+            // unlimited rigid motor that would make the limbs immovable.
+            joint.setMaxMotorTorque(Math.min(100,Math.max(14,mass*60)));
           }else joint.setMaxMotorTorque(0);
         }
       }
