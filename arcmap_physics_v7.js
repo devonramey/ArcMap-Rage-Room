@@ -163,6 +163,23 @@
       }
       rb.setAwake(true);
     }
+    containDraggedBody(game) {
+      // A fast drag can briefly defeat contact resolution at grazing angles.
+      // While held, project the torso's oriented shape back inside the physical
+      // room and discard only velocity directed further through a boundary.
+      if(!game.drag||!this.torso||this.destructionStarted)return;
+      const rb=this.torso,center=rb.getPosition(),e=this.dragExtent(rb),r=this.room;
+      const clearance=3;
+      const left=(r.left+e.x+clearance)/SCALE,right=(r.right-e.x-clearance)/SCALE;
+      const top=(r.top+e.y+clearance)/SCALE,bottom=(r.bottom-e.y-clearance)/SCALE;
+      const x=clamp(center.x,left,right),y=clamp(center.y,top,bottom);
+      if(Math.abs(x-center.x)<.0002&&Math.abs(y-center.y)<.0002)return;
+      rb.setTransform(this.v(x,y),rb.getAngle());
+      const v=rb.getLinearVelocity();
+      const vx=(center.x<left&&v.x<0)||(center.x>right&&v.x>0)?0:v.x;
+      const vy=(center.y<top&&v.y<0)||(center.y>bottom&&v.y>0)?0:v.y;
+      rb.setLinearVelocity(this.v(vx,vy));rb.setAwake(true);
+    }
     stabilizeLimbs(game) {
       // Gentle, torque-limited joint-centering only when splayed far from the
       // original pose. Avoid forced angular motors on an actively dragged limb.
@@ -315,7 +332,10 @@
         this.syncDrag(game);
         if(!game.destroyed)this.stabilizeLimbs(game);
         if(game.stasisTime>0 && this.torso){this.torso.setLinearVelocity(this.v(0,0));this.torso.setAngularVelocity(0)}
-        for(let i=0,n=Math.max(1,Math.ceil(dt/(1/120)));i<n;i++)this.world.step(dt/n,20,12);
+        for(let i=0,n=Math.max(1,Math.ceil(dt/(1/120)));i<n;i++){
+          this.world.step(dt/n,20,12);
+          this.containDraggedBody(game);
+        }
         for(const contact of this.contacts){
           if(contact.strength>3 && game.time-this.lastImpact>.16){
             this.lastImpact=game.time;
