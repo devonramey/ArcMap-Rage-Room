@@ -23,7 +23,6 @@ for(const [x,y] of [[-1200,320],[2300,320],[640,-800],[640,1400],[-1200,-1000],[
   game.drag={type:'body',x,y,offX:0,offY:0,vx:0,vy:0};
   for(let i=0;i<140;i++){
     tick();dragSteps++;
-    if(i%25===0)console.log('DRAG SAMPLE',JSON.stringify({i,target:[x,y],pos:eng.torso.getPosition(),angle:eng.torso.getAngle(),joint:!!eng.mouseJoint,clamped:eng.debugLastDragTarget}));
     const wanted=eng.debugLastDragTarget,r=eng.room;
     assert.ok(wanted.x>=r.left&&wanted.x<=r.right&&wanted.y>=r.top&&wanted.y<=r.bottom,'Drag target outside physical room');
     assert.ok(inBounds(eng.torso,7),'Body crossed room wall while held: '+JSON.stringify({target:[x,y],pos:eng.torso.getPosition(),extent:eng.dragExtent(eng.torso)}));
@@ -40,7 +39,6 @@ for(let cycle=0;cycle<7;cycle++){
  for(const link of eng.limbs){
    const shoulder=link.shoulder?.getJointAngle()||0,elbow=link.elbow?.getJointAngle()||0;
    samples.push([shoulder,elbow]);
-   if(cycle===0||Math.abs(shoulder)>2.08||Math.abs(elbow)>2.27)console.log('JOINT SAMPLE',JSON.stringify({cycle,part:link.limb.type+link.limb.side,shoulder,elbow,bodyAngle:eng.torso.getAngle(),velocity:eng.torso.getAngularVelocity()}));
    assert.ok(Number.isFinite(shoulder)&&Number.isFinite(elbow),'Joint angles must remain finite');
    assert.ok(Math.abs(shoulder)<2.1,'Shoulder locked beyond allowable range');
    assert.ok(Math.abs(elbow)<2.31,'Elbow/knee locked beyond allowable range');
