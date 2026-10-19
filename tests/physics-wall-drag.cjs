@@ -40,6 +40,7 @@ for(let cycle=0;cycle<7;cycle++){
  for(const link of eng.limbs){
    const shoulder=link.shoulder?.getJointAngle()||0,elbow=link.elbow?.getJointAngle()||0;
    samples.push([shoulder,elbow]);
+   if(cycle===0||Math.abs(shoulder)>2.08||Math.abs(elbow)>2.27)console.log('JOINT SAMPLE',JSON.stringify({cycle,part:link.limb.type+link.limb.side,shoulder,elbow,bodyAngle:eng.torso.getAngle(),velocity:eng.torso.getAngularVelocity()}));
    assert.ok(Number.isFinite(shoulder)&&Number.isFinite(elbow),'Joint angles must remain finite');
    assert.ok(Math.abs(shoulder)<2.1,'Shoulder locked beyond allowable range');
    assert.ok(Math.abs(elbow)<2.31,'Elbow/knee locked beyond allowable range');
