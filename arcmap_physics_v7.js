@@ -124,7 +124,7 @@
     clampDragTarget(rb,p){
       // Don't request a physically impossible mouse position inside a static wall.
       // This stops the very stiff mouse joint from pulling the torso THROUGH a wall.
-      const e=this.dragExtent(rb),margin=3,r=this.room;
+      const e=this.dragExtent(rb),margin=18,r=this.room;
       const minX=(r.left+e.x+margin)/SCALE,maxX=(r.right-e.x-margin)/SCALE;
       const minY=(r.top+e.y+margin)/SCALE,maxY=(r.bottom-e.y-margin)/SCALE;
       return this.v(clamp(p.x,minX,maxX),clamp(p.y,minY,maxY));
