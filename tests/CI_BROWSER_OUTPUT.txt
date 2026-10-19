@@ -1,4 +1,4 @@
 
-added 1 package in 1s
+added 1 package in 2s
 Browser integration: {"weapons":38,"physics":true,"impactPart":"arm-l-lower","collided":true,"embedded":1,"fragments":12,"rigidFragments":12,"voiceAssetsReady":true,"screaming":true}
 PASS: Browser loaded Planck, 38 weapons, knife embedding and 12 physical fragments.
